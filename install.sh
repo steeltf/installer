@@ -417,56 +417,28 @@ REPOS=("api" "frontend" "parser" "unraid")
 BASE_URL="github.com/steeltf"
 
 for repo in "${REPOS[@]}"; do
-    # Check if the directory exists and is a valid Git repository
-    if [ -d "$repo/.git" ]; then
+    if [ -d "$repo" ]; then
         echo "🔄 Updating existing repo: $repo"
         cd "$repo"
         # Update remote URL with new credentials in case they changed, then pull
         git remote set-url origin "https://${GH_USER}:${GH_TOKEN}@${BASE_URL}/${repo}.git"
         git fetch origin
         if git checkout "$TARGET_VERSION"; then
-            # Stash local changes, pull, then re-apply. This prevents merge conflicts on user-modified files.
-            git stash
-            git pull origin "$TARGET_VERSION" --rebase
-            git stash pop 2>/dev/null || true # Pop will fail if there was nothing to stash, which is fine.
-            
-            # Authenticate and pull submodules (like tf-demos-viewer)
-            git config --local url."https://${GH_USER}:${GH_TOKEN}@github.com/".insteadOf "https://github.com/"
+            git pull origin "$TARGET_VERSION"
+            # --- FIX: Update submodules when pulling ---
             git submodule update --init --recursive
         else
             echo "⚠️  Warning: Failed to checkout $TARGET_VERSION for $repo. Staying on current branch."
         fi
         cd ..
     else
-        # If the directory exists but isn't a valid repo, remove it before cloning.
-        if [ -d "$repo" ]; then
-            echo "⚠️  Directory '$repo' exists but is not a valid Git repository. Removing and re-cloning."
-            # Preserve the .env file if we're about to delete the unraid directory
-            if [ "$repo" == "unraid" ] && [ -f "$repo/.env" ]; then
-                echo "   -> Backing up existing .env file..."
-                mv "$repo/.env" "../.env.tmp_backup"
-            fi
-            rm -rf "$repo"
-        fi
-
         echo "⬇️  Cloning new repo: $repo ($TARGET_VERSION)"
-        git clone -b "$TARGET_VERSION" "https://${GH_USER}:${GH_TOKEN}@${BASE_URL}/${repo}.git"
+        # --- FIX: Clone with --recursive to pull submodules automatically ---
+        git clone --recursive -b "$TARGET_VERSION" "https://${GH_USER}:${GH_TOKEN}@${BASE_URL}/${repo}.git"
         if [ $? -ne 0 ]; then
             echo "❌ Critical Error: Failed to clone $repo (branch: $TARGET_VERSION)."
             exit 1
         fi
-
-        # Restore the .env file if it was backed up
-        if [ "$repo" == "unraid" ] && [ -f "../.env.tmp_backup" ]; then
-            echo "   -> Restoring .env file..."
-            mv "../.env.tmp_backup" "$repo/.env"
-        fi
-        
-        # Authenticate and initialize submodules automatically
-        cd "$repo"
-        git config --local url."https://${GH_USER}:${GH_TOKEN}@github.com/".insteadOf "https://github.com/"
-        git submodule update --init --recursive
-        cd ..
     fi
 done
 
@@ -484,6 +456,13 @@ elif command -v getconf &> /dev/null; then
 fi
 
 DEFAULT_CPU_SET=""
+if [ "$CPU_COUNT" -gt 4 ]; then
+    DEFAULT_CPU_SET="2-$(($CPU_COUNT - 1))"
+elif [ "$CPU_COUNT" -gt 1 ]; then
+    DEFAULT_CPU_SET="1-$(($CPU_COUNT - 1))"
+else
+    DEFAULT_CPU_SET="0"
+fi
 
 DEFAULT_MEM_LIMIT="4G"
 DEFAULT_MEM_RESERVATION="256M"
