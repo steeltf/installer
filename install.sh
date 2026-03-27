@@ -425,6 +425,10 @@ for repo in "${REPOS[@]}"; do
         git fetch origin
         if git checkout "$TARGET_VERSION"; then
             git pull origin "$TARGET_VERSION"
+            
+            # Authenticate and pull submodules (like tf-demos-viewer)
+            git config --local url."https://${GH_USER}:${GH_TOKEN}@github.com/".insteadOf "https://github.com/"
+            git submodule update --init --recursive
         else
             echo "⚠️  Warning: Failed to checkout $TARGET_VERSION for $repo. Staying on current branch."
         fi
@@ -436,6 +440,12 @@ for repo in "${REPOS[@]}"; do
             echo "❌ Critical Error: Failed to clone $repo (branch: $TARGET_VERSION)."
             exit 1
         fi
+        
+        # Authenticate and initialize submodules automatically
+        cd "$repo"
+        git config --local url."https://${GH_USER}:${GH_TOKEN}@github.com/".insteadOf "https://github.com/"
+        git submodule update --init --recursive
+        cd ..
     fi
 done
 
