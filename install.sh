@@ -448,21 +448,7 @@ echo "📝 Configuration"
 echo "   We can auto-generate the .env file for you."
 echo "   Press Enter to accept [defaults] or skip."
 
-CPU_COUNT=1
-if command -v nproc &> /dev/null; then
-    CPU_COUNT=$(nproc)
-elif command -v getconf &> /dev/null; then
-    CPU_COUNT=$(getconf _NPROCESSORS_ONLN)
-fi
-
 DEFAULT_CPU_SET=""
-if [ "$CPU_COUNT" -gt 4 ]; then
-    DEFAULT_CPU_SET="2-$(($CPU_COUNT - 1))"
-elif [ "$CPU_COUNT" -gt 1 ]; then
-    DEFAULT_CPU_SET="1-$(($CPU_COUNT - 1))"
-else
-    DEFAULT_CPU_SET="0"
-fi
 
 DEFAULT_MEM_LIMIT="4G"
 DEFAULT_MEM_RESERVATION="256M"
@@ -509,7 +495,7 @@ ask "Steam Admin ID64s (comma separated)" "$DEF_ADMIN_IDS" "ADMIN_IDS"
 ask "Cloudflare API Token" "$DEF_CF_TOKEN" "CLOUDFLARE_API_TOKEN"
 ask "Cloudflare Account ID" "$DEF_CF_ACCOUNT" "CLOUDFLARE_ACCOUNT_ID"
 ask "Tunnel Domain (e.g. steel.tf)" "$DEF_DOMAIN" "TUNNEL_DOMAIN"
-ask "CPU Allocation (e.g. 0, 1-3)" "${DEF_CPU_SET:-${CPU_SET:-$DEFAULT_CPU_SET}}" "CPU_SET"
+ask "CPU Allocation (Leave blank for standard scheduling)" "${DEF_CPU_SET:-${CPU_SET:-$DEFAULT_CPU_SET}}" "CPU_SET"
 ask "Memory Limit (e.g. 4G)" "${DEF_MEM_LIMIT:-${MEM_LIMIT:-$DEFAULT_MEM_LIMIT}}" "MEM_LIMIT"
 ask "Memory Reservation (e.g. 256M)" "${DEF_MEM_RESERVATION:-${MEM_RESERVATION:-$DEFAULT_MEM_RESERVATION}}" "MEM_RESERVATION"
 
@@ -537,6 +523,12 @@ if [ -n "$STEAM_API_KEY" ] || [ -n "$ADMIN_IDS" ] || [ -n "$CLOUDFLARE_API_TOKEN
             GEN_KEY=$(head -c 32 /dev/urandom | base64 | tr -dc 'a-zA-Z0-9')
         fi
 
+        if [ -z "$CPU_SET" ]; then
+            ENV_CPU_SET="# CPU_SET=\"\""
+        else
+            ENV_CPU_SET="CPU_SET=$CPU_SET"
+        fi
+
         cat > "$ENV_FILE" <<EOF
 STEAM_API_KEY=$STEAM_API_KEY
 KEY=$GEN_KEY
@@ -544,7 +536,7 @@ ADMIN_IDS=$ADMIN_IDS
 CLOUDFLARE_API_TOKEN=$CLOUDFLARE_API_TOKEN
 CLOUDFLARE_ACCOUNT_ID=$CLOUDFLARE_ACCOUNT_ID
 TUNNEL_DOMAIN=$TUNNEL_DOMAIN
-CPU_SET=$CPU_SET
+$ENV_CPU_SET
 MEM_LIMIT=$MEM_LIMIT
 MEM_RESERVATION=$MEM_RESERVATION
 # Tunnel Protocol: http2 (default, stable) or quic (faster, requires UDP support)
