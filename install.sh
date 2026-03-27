@@ -425,7 +425,10 @@ for repo in "${REPOS[@]}"; do
         git remote set-url origin "https://${GH_USER}:${GH_TOKEN}@${BASE_URL}/${repo}.git"
         git fetch origin
         if git checkout "$TARGET_VERSION"; then
-            git pull origin "$TARGET_VERSION"
+            # Stash local changes, pull, then re-apply. This prevents merge conflicts on user-modified files.
+            git stash
+            git pull origin "$TARGET_VERSION" --rebase
+            git stash pop 2>/dev/null || true # Pop will fail if there was nothing to stash, which is fine.
             
             # Authenticate and pull submodules (like tf-demos-viewer)
             git config --local url."https://${GH_USER}:${GH_TOKEN}@github.com/".insteadOf "https://github.com/"
