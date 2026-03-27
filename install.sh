@@ -484,13 +484,6 @@ elif command -v getconf &> /dev/null; then
 fi
 
 DEFAULT_CPU_SET=""
-if [ "$CPU_COUNT" -gt 4 ]; then
-    DEFAULT_CPU_SET="2-$(($CPU_COUNT - 1))"
-elif [ "$CPU_COUNT" -gt 1 ]; then
-    DEFAULT_CPU_SET="1-$(($CPU_COUNT - 1))"
-else
-    DEFAULT_CPU_SET="0"
-fi
 
 DEFAULT_MEM_LIMIT="4G"
 DEFAULT_MEM_RESERVATION="256M"
