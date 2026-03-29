@@ -1,35 +1,12 @@
-# STEEL.TF Installer
+# STEEL.TF Installer & Sync Utilities
 
-This repository contains the installer script for the STEEL.TF stack.
-It handles cloning the necessary private repositories, configuring the environment, and deploying the Docker containers.
+⚠️ **ARCHITECTURE UPDATE (2026):** We now use a Portainer-first architecture. These scripts only synchronize private GitHub repositories. Container deployment and Cloudflare Zero Trust tunnel routing are handled independently via Portainer.
 
-## 🚀 Installation
+## 🚀 Initial Installation
+Run this to bootstrap the environment and generate secure credentials:
+`bash <(curl -sL https://raw.githubusercontent.com/steeltf/installer/main/install.sh)`
 
-Run this command in your Unraid Terminal or SSH session:
-
-```bash
-bash <(curl -sL https://raw.githubusercontent.com/steeltf/installer/main/install.sh)
-```
-
-### Requirements
-
-*   **Authentication**: You will need a GitHub Username and a **Personal Access Token (PAT)** with `repo` scope.
-    *   *Note: If the organization enforces SAML SSO, ensure your token is explicitly authorized for the organization in GitHub settings.*
-*   **Configuration**: The installer will prompt you for:
-    *   Steam API Key
-    *   Cloudflare API Token & Account ID
-    *   Domain Name
-
-### CLI Tool Usage (Optional)
-You can install this script as a command-line tool named `tf` to easily update your stack later.
-
-```bash
-curl -sL https://raw.githubusercontent.com/steeltf/installer/main/install.sh > /usr/local/bin/tf
-chmod +x /usr/local/bin/tf
-```
-
-Now you can run this command to pull the latest changes and rebuild:
-```bash
-tf update
-```
-The `update` command will also automatically update the `tf` tool itself if a new version is available.
+## 🔄 Routine Updates
+When a new update drops, run the sync script to pull the code:
+`bash <(curl -sL https://raw.githubusercontent.com/steeltf/installer/main/sync.sh)`
+Then, go to your `Steel-App` stack in Portainer, toggle **"Re-pull image and redeploy"**, and click **Update the stack**.
