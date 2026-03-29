@@ -1,6 +1,6 @@
 #!/bin/bash
 echo "================================================"
-echo "   STEEL.TF | Code Sync Only"
+echo "   STEEL.TF | Code Sync & Build"
 echo "================================================"
 
 INSTALL_DIR="/opt/steel.tf"
@@ -39,4 +39,10 @@ for repo in "${REPOS[@]}"; do
         cd ..
     fi
 done
-echo "✅ Code sync complete. Head over to Portainer to redeploy the image."
+
+echo "🔨 Building new Docker image natively on the host..."
+# We run the build command here so Portainer doesn't have to!
+docker build --network host -t steeltf-local:latest -f unraid/Dockerfile .
+
+echo "------------------------------------------------"
+echo "✅ Build complete! Head over to Portainer and restart your Steel-App stack."
