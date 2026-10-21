@@ -57,7 +57,7 @@ echo "================================================"
 
 if [ "$1" == "restart" ]; then
     echo "🔄 Restarting containers..."
-    docker restart steel-tf steel-tf-tunnel-primary steel-tf-tunnel-replica
+    docker restart steel-tf steel-tf-tunnel-primary
     if [ $? -ne 0 ]; then
         echo "❌ Error: Failed to restart containers. Are they running?"
         exit 1
@@ -161,7 +161,7 @@ if [ "$1" == "restore" ]; then
     fi
 
     echo "🛑 Stopping containers..."
-    docker stop steel-tf steel-tf-tunnel-primary steel-tf-tunnel-replica 2>/dev/null
+    docker stop steel-tf steel-tf-tunnel-primary 2>/dev/null
 
     echo "📦 Extracting archive..."
     # Remove existing backup dumps to ensure we identify the restored one correctly
@@ -176,7 +176,7 @@ if [ "$1" == "restore" ]; then
     fi
 
     echo "🚀 Restarting containers..."
-    docker start steel-tf steel-tf-tunnel-primary steel-tf-tunnel-replica
+    docker start steel-tf steel-tf-tunnel-primary
 
     echo "✅ Restore complete."
     exit 0

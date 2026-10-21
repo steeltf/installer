@@ -1,0 +1,29 @@
+name: Deploy Steel.tf
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: steel-tf-production
+  cancel-in-progress: false
+
+jobs:
+  deploy:
+    runs-on: [self-hosted, linux, steel-tf-deploy]
+    env:
+      INSTALL_DIR: ${{ vars.STEELTF_INSTALL_DIR }}
+    steps:
+      - name: Back up, sync, and redeploy
+        shell: bash
+        run: |
+          set -euo pipefail
+          if [[ -z "$INSTALL_DIR" ]]; then
+            echo "::error::Set the organization Actions variable STEELTF_INSTALL_DIR."
+            exit 1
+          fi
+          curl -fsSL https://raw.githubusercontent.com/steeltf/installer/main/install.sh | bash -s -- update
