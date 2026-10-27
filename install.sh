@@ -459,6 +459,8 @@ EXISTING_KEY=""
 if [ -f "$ENV_FILE" ]; then
     echo "   (Loaded defaults from $ENV_FILE)"
     DEF_STEAM_KEY=$(grep "^STEAM_API_KEY=" "$ENV_FILE" | cut -d'=' -f2-)
+    DEF_TURNSTILE_SITE_KEY=$(grep "^TURNSTILE_SITE_KEY=" "$ENV_FILE" | cut -d'=' -f2-)
+    DEF_TURNSTILE_SECRET_KEY=$(grep "^TURNSTILE_SECRET_KEY=" "$ENV_FILE" | cut -d'=' -f2-)
     DEF_ADMIN_IDS=$(grep "^ADMIN_IDS=" "$ENV_FILE" | cut -d'=' -f2-)
     DEF_CF_TOKEN=$(grep "^CLOUDFLARE_API_TOKEN=" "$ENV_FILE" | cut -d'=' -f2-)
     DEF_CF_ACCOUNT=$(grep "^CLOUDFLARE_ACCOUNT_ID=" "$ENV_FILE" | cut -d'=' -f2-)
@@ -490,7 +492,31 @@ ask() {
     fi
 }
 
+ask_secret() {
+    local prompt="$1"
+    local default="$2"
+    local var_name="$3"
+    local input
+
+    if [ "$SKIP_PROMPTS" = true ]; then
+        if [ -n "$default" ]; then echo "   $prompt: [configured]"; fi
+        printf -v "$var_name" '%s' "$default"
+        return
+    fi
+
+    if [ -n "$default" ]; then
+        read_tty -s -r -p "$prompt [press Enter to keep existing value]: " input
+        printf -v "$var_name" '%s' "${input:-$default}"
+    else
+        read_tty -s -r -p "$prompt: " input
+        printf -v "$var_name" '%s' "$input"
+    fi
+    echo ""
+}
+
 ask "Steam API Key" "$DEF_STEAM_KEY" "STEAM_API_KEY"
+ask "Cloudflare Turnstile Site Key" "$DEF_TURNSTILE_SITE_KEY" "TURNSTILE_SITE_KEY"
+ask_secret "Cloudflare Turnstile Secret Key" "$DEF_TURNSTILE_SECRET_KEY" "TURNSTILE_SECRET_KEY"
 ask "Steam Admin ID64s (comma separated)" "$DEF_ADMIN_IDS" "ADMIN_IDS"
 ask "Cloudflare API Token" "$DEF_CF_TOKEN" "CLOUDFLARE_API_TOKEN"
 ask "Cloudflare Account ID" "$DEF_CF_ACCOUNT" "CLOUDFLARE_ACCOUNT_ID"
@@ -499,7 +525,7 @@ ask "CPU Allocation (Leave blank for standard scheduling)" "${DEF_CPU_SET:-${CPU
 ask "Memory Limit (e.g. 4G)" "${DEF_MEM_LIMIT:-${MEM_LIMIT:-$DEFAULT_MEM_LIMIT}}" "MEM_LIMIT"
 ask "Memory Reservation (e.g. 256M)" "${DEF_MEM_RESERVATION:-${MEM_RESERVATION:-$DEFAULT_MEM_RESERVATION}}" "MEM_RESERVATION"
 
-if [ -n "$STEAM_API_KEY" ] || [ -n "$ADMIN_IDS" ] || [ -n "$CLOUDFLARE_API_TOKEN" ] || [ -n "$CLOUDFLARE_ACCOUNT_ID" ] || [ -n "$TUNNEL_DOMAIN" ] || [ -n "$CPU_SET" ] || [ -n "$MEM_LIMIT" ] || [ -n "$MEM_RESERVATION" ]; then
+if [ -n "$STEAM_API_KEY" ] || [ -n "$TURNSTILE_SITE_KEY" ] || [ -n "$TURNSTILE_SECRET_KEY" ] || [ -n "$ADMIN_IDS" ] || [ -n "$CLOUDFLARE_API_TOKEN" ] || [ -n "$CLOUDFLARE_ACCOUNT_ID" ] || [ -n "$TUNNEL_DOMAIN" ] || [ -n "$CPU_SET" ] || [ -n "$MEM_LIMIT" ] || [ -n "$MEM_RESERVATION" ]; then
     SHOULD_WRITE=true
     
     if [ -f "$ENV_FILE" ]; then
@@ -531,6 +557,8 @@ if [ -n "$STEAM_API_KEY" ] || [ -n "$ADMIN_IDS" ] || [ -n "$CLOUDFLARE_API_TOKEN
 
         cat > "$ENV_FILE" <<EOF
 STEAM_API_KEY=$STEAM_API_KEY
+TURNSTILE_SITE_KEY=$TURNSTILE_SITE_KEY
+TURNSTILE_SECRET_KEY=$TURNSTILE_SECRET_KEY
 KEY=$GEN_KEY
 ADMIN_IDS=$ADMIN_IDS
 CLOUDFLARE_API_TOKEN=$CLOUDFLARE_API_TOKEN
