@@ -22,3 +22,7 @@ changes therefore deploy after merge. The workflow uses the installer to sync
 and build the stack, and the build script backs up the live SQLite database
 before pulling the Node.js base image. Backups older than 30 days are removed
 after a new backup succeeds.
+
+## 👥 Credits & Ownership
+- **Owner & Developer:** Emiel ([☁]Emiel)
+- **Early Contributors:** snacks (limited early contributions to the API and demo parser)
